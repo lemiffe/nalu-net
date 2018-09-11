@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nalu-Net Client</title>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-database.js"></script>
+    <style type="text/css">
+        html {
+            height: 100%;
+        }
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #333333;
+            background-image: url('metal.jpg');
+            background-size: cover;
+        }
+
+        .outer-border {
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            position: absolute;
+            border: 50px solid #000;
+            border-radius: 60px;
+            z-index: 2000;
+        }
+
+        .inner-border {
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            position: absolute;
+            border: 30px solid #dfdfdf;
+            z-index: 2001;
+        }
+
+        .inside-fridge {
+            top: 0;
+            right: 50px;
+            bottom: 0;
+            left: 50px;
+            position: absolute;
+        }
+
+        .inside-fridge .top {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 66%;
+            border-bottom: solid 5px #777;
+            -webkit-box-shadow: 0px 10px 38px 0px rgba(0,0,0,0.61);
+            -moz-box-shadow: 0px 10px 38px 0px rgba(0,0,0,0.61);
+            box-shadow: 0px 10px 38px 0px rgba(0,0,0,0.61);
+        }
+
+        .inside-fridge .middle {
+            position: absolute;
+            top: 33%;
+            right: 0;
+            left: 0;
+            bottom: 33%;
+            border-bottom: solid 5px #777;
+            -webkit-box-shadow: 0px 10px 55px 0px rgba(0,0,0,0.41);
+            -moz-box-shadow: 0px 10px 55px 0px rgba(0,0,0,0.41);
+            box-shadow: 0px 10px 55px 0px rgba(0,0,0,0.41);
+        }
+
+        .inside-fridge .bottom {
+            position: absolute;
+            top: 66%;
+            right: 0;
+            left: 0;
+            bottom: 0;
+        }
+
+        .inside-fridge .space {
+            float: left;
+            width: 20%;
+            height: 100%;
+            position: relative;
+            text-align: center;
+        }
+
+        .inside-fridge .space img {
+            max-height: 70%;
+            margin: 0 auto;
+            position: absolute;
+            bottom: -10px;
+            z-index: 1000;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="inside-fridge">
+        <div class="top">
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+        </div>
+        <div class="middle">
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+        </div>
+        <div class="bottom">
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+            <div class="space"><img src="nalu.jpg" /></div>
+        </div>
+    </div>
+    <div class="outer-border"></div>
+    <div class="inner-border"></div>
+    
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous">
+    </script>
+
+    <script>
+        var config = {
+            apiKey: "AIzaSyAvr0t-KykIeU8sHiHcGK1pLVaE00DXQSw", // Exposed on purpose, read-only
+            authDomain: "nalu-net.firebaseapp.com",
+            databaseURL: "https://nalu-net.firebaseio.com"
+        };
+        firebase.initializeApp(config);
+
+        var database = firebase.database();
+
+        function activate(i) {
+            var nalus = $('.space img').filter(function() {
+                return $(this).css('visibility') === 'hidden';
+            });
+            var shuffled = nalus.sort(() => .5 - Math.random()); 
+            var selected = shuffled.slice(0, i);
+            $(selected).each(function() { $(this).css('visibility', 'visible') });
+        }
+
+        function deactivate(i) {
+            var nalus = $('.space img').filter(function() {
+                return $(this).css('visibility') === 'visible';
+            });
+            var shuffled = nalus.sort(() => .5 - Math.random()); 
+            var selected = shuffled.slice(0, i);
+            $(selected).each(function() { $(this).css('visibility', 'hidden') });
+        }
+
+        // Listen for updates
+        var countRef = firebase.database().ref('nalus/count');
+        countRef.on('value', function(snapshot) {
+            var activeNalus = $('.space img').filter(function() {
+                return $(this).css('visibility') === 'visible';
+            }).length;
+
+            var newValue = snapshot.val();
+
+            if (newValue > activeNalus) {
+                activate(newValue - activeNalus);
+            } else if (newValue < activeNalus && activeNalus > 0) {
+                deactivate(activeNalus - newValue);
+            }
+        });
+    </script>
+
+</body>
+</html>
