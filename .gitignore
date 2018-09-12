@@ -2,11 +2,11 @@
 *.ini
 *.json
 OpenCV
-*.png
+client/*.png
+server/*.png
 .DS_Store
 firebase.json
 config.ini
-snap.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

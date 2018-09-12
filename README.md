@@ -28,12 +28,11 @@ Details:
 
 Installation:
 - pip3 install firebase_admin
-- Method 1 (Raspberry PI): Separate script to take webcam photos every N seconds
-	- This method is to be used if you don't have as powered USB hub (webcam + v4l can be flaky)
+- Method 1 (Raspberry PI): fswebcam (instead of OpenCV)
+	- This method is to be used if you don't have as powered USB hub (webcam + opencv + v4l can be flaky)
 	- sudo apt-get install fswebcam
 	- Crontab: `@reboot cd /home/pi/apps/nalu-net/client && python main.py &`
-	- Crontab: `* * * * * while true ; do fswebcam /home/pi/apps/nalu-net/client/snap.png & sleep 5; done`
-	- When running the client add "camless" to the args, e.g. `python main.py camless`
+	- When running the client add "fswebcam" to the args, e.g. `python main.py fswebcam`
 - Method 2 (OSX): OpenCV installation
 	- brew install opencv
 	- echo /usr/local/opt/opencv/lib/python3.6/site-packages >> /usr/local/lib/python3.6/site-packages/opencv3.pth

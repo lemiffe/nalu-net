@@ -1,4 +1,5 @@
 import cv2, sched, time, sys, os, requests, json, re
+from subprocess import call
 import firebase_admin
 from firebase_admin import credentials, db
 from six.moves import configparser
@@ -20,12 +21,6 @@ else:
     db_root = config['db']['root']
     nalunet_url = config['nalunet']['url']
 
-# Add optional JSON "img" debugger
-nalunet_url += '?cam=true' if 'cam' in sys.argv else ''
-
-# If we are using another program to take "snap.png" pictures, you can send "camless" param to avoid taking pictures here
-camless = True if 'camless' in sys.argv else False
-
 # Setup: Firebase - Realtime Database (Note: We are not using Firestore)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "firebase.json"
 cred = credentials.Certificate("firebase.json")
@@ -34,14 +29,17 @@ firebase_admin.initialize_app(cred, {
 })
 root = db.reference()
 
-# Setup
+# Setup: Scheduler + vars
 s = sched.scheduler(time.time, time.sleep)
 failures = 0
 cam_index = 0
 restarted = True if 'restarted' in sys.argv else False
+nalunet_url += '?cam=true' if 'cam' in sys.argv else '' # Optional JSON "img" debugger
+fswebcam = True if 'fswebcam' in sys.argv else False # Use "fswebcam" arg to avoid using OpenCV
+filename = 'snap.png'
 
-# Setup: Webcam
-if not camless:
+# Setup: Webcam (OpenCV)
+if not fswebcam:
     print('Webcam Starting...')
     cam = cv2.VideoCapture(cam_index)
 
@@ -52,18 +50,14 @@ def update_count(count):
 def get_count():
 	return root.child('nalus').get()
 
-def snap(sc):
+def run_opencv(sc):
     global failures
     global cam_index
     global cam
+    global filename
 
     # Auto healing
-    if failures >= 20 and restarted == True:
-        # Reboot the machine :P
-        print ("Reboot...")
-        os.execl('sudo reboot.sh', '')
-
-    elif failures >= 5:
+    if failures >= 5:
         # Try to fix
         print ("Trying to fix...")
         if cam != None:
@@ -83,13 +77,12 @@ def snap(sc):
         
         if ret:
             # Take a snap
-            img_name = 'snap.png'
-            cv2.imwrite(img_name, frame)
+            cv2.imwrite(filename, frame)
 
             # Send to service
             print('- Detect')
             url = nalunet_url
-            files = {'file': open('snap.png', 'rb')}
+            files = {'file': open(filename, 'rb')}
             r = requests.post(url, files=files)
             
             if 'cam' in sys.argv:
@@ -107,14 +100,12 @@ def snap(sc):
                 print('- Updated!')
 
             # Remove image
-            os.remove("snap.png")
+            os.remove(filename)
 
-            # Schedule next snap
+            # Schedule next execution
             print("Sleeping for a few seconds...\n")
             failures = 0
-
-            # Schedule next snap
-            s.enter(10, 1, snap, (sc,))
+            s.enter(10, 1, run_opencv, (sc,))
 
         else:
             # Failed, schedule again in 10 seconds to see if it works...
@@ -126,7 +117,7 @@ def snap(sc):
             else:
                 print ("Trying webcam index 1")
                 cam_index = -1
-            s.enter(10, 1, snap, (sc,))
+            s.enter(10, 1, run_opencv, (sc,))
 
     except Exception as inst:
         # Failed, schedule again in 10 seconds to see if it works...
@@ -134,14 +125,19 @@ def snap(sc):
         print (inst)
         print ('Sleeping for a few seconds...')
         failures += 1
-        s.enter(10, 1, snap, (sc,))
+        s.enter(10, 1, run_opencv, (sc,))
 
-def detect_only(sc):
+def run_fswebcam(sc):
+    global filename
+
     try:
+        print('Snapping...')
+        call(["fswebcam -r 1280x720 --no-banner " + filename], shell=True)
+
         # Send to service
         print('- Detect')
         url = nalunet_url
-        files = {'file': open('snap.png', 'rb')}
+        files = {'file': open(filename, 'rb')}
         r = requests.post(url, files=files)
         
         if 'cam' in sys.argv:
@@ -158,31 +154,35 @@ def detect_only(sc):
             update_count(response['count'])
             print('- Updated!')
 
+        # Remove image
+        os.remove(filename)
+
         # Schedule next execution
-        s.enter(10, 1, detect_only, (sc,))
+        print("Sleeping for a few seconds...\n")
+        failures = 0
+        s.enter(10, 1, run_fswebcam, (sc,))
 
     except Exception as inst:
         # Failed, schedule again in 10 seconds to see if it works...
         print ('Exception:')
         print (inst)
         print ('Sleeping for a few seconds...')
-        s.enter(10, 1, detect_only, (sc,))
+        s.enter(10, 1, run_fswebcam, (sc,))
 
-# Start snapping
+# Start program
 try:
-
-    if camless:
-        # Detection only
-        s.enter(10, 1, detect_only, (s,))
+    if fswebcam:
+        # FSWebCam mode
+        s.enter(10, 1, run_fswebcam, (s,))
         s.run()
 
     else:
-        # Standard operation
-        s.enter(0, 1, snap, (s,))
+        # OpenCV mode
+        s.enter(0, 1, run_opencv, (s,))
         s.run()
 
 except KeyboardInterrupt:
     # Exit
-    if not camless:
+    if not fswebcam:
         cam.release()
     sys.exit()

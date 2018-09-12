@@ -9,6 +9,7 @@
         html {
             height: 100%;
         }
+
         body {
             height: 100%;
             margin: 0;
@@ -120,13 +121,41 @@
             position: absolute;
             bottom: -10px;
             z-index: 1000;
-            visibility: hidden;
+            opacity: 0;
+        }
+
+        .inside-fridge .shelf1 {
+            position: absolute;
+            top: 30.3333%;
+            right: 0;
+            left: 0;
+            bottom: 66.6666%;
+            background: #2d2b2a; /* Old browsers */
+            background: -moz-linear-gradient(top, #2d2b2a 0%, #666260 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, #2d2b2a 0%,#666260 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, #2d2b2a 0%,#666260 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2d2b2a', endColorstr='#666260',GradientType=0 ); /* IE6-9 */
+        }
+
+        .inside-fridge .shelf2 {
+            position: absolute;
+            top: 63.6666%;
+            right: 0;
+            left: 0;
+            bottom: 33.3333%;
+            background: #2d2b2a; /* Old browsers */
+            background: -moz-linear-gradient(top, #2d2b2a 0%, #666260 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, #2d2b2a 0%,#666260 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, #2d2b2a 0%,#666260 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2d2b2a', endColorstr='#666260',GradientType=0 ); /* IE6-9 */
         }
     </style>
 </head>
 <body>
 
     <div class="inside-fridge">
+        <div class="shelf1"></div>
+        <div class="shelf2"></div>
         <div class="top">
             <div class="space"><img src="nalu.png" /></div>
             <div class="space"><img src="nalu.png" /></div>
@@ -185,27 +214,27 @@
 
         function activate(i) {
             var nalus = $('.space img').filter(function() {
-                return $(this).css('visibility') === 'hidden';
+                return $(this).css('opacity') === '0';
             });
             var shuffled = nalus.sort(() => .5 - Math.random()); 
             var selected = shuffled.slice(0, i);
-            $(selected).each(function() { $(this).css('visibility', 'visible') });
+            $(selected).each(function() { $(this).animate({opacity: 1}, Math.floor(Math.random() * 1000) + 200); });
         }
 
         function deactivate(i) {
             var nalus = $('.space img').filter(function() {
-                return $(this).css('visibility') === 'visible';
+                return $(this).css('opacity') === '1';
             });
             var shuffled = nalus.sort(() => .5 - Math.random()); 
             var selected = shuffled.slice(0, i);
-            $(selected).each(function() { $(this).css('visibility', 'hidden') });
+            $(selected).each(function() { $(this).animate({opacity: 0}, Math.floor(Math.random() * 1000) + 200); });
         }
 
         // Listen for updates
         var countRef = firebase.database().ref('nalus/count');
         countRef.on('value', function(snapshot) {
             var activeNalus = $('.space img').filter(function() {
-                return $(this).css('visibility') === 'visible';
+                return $(this).css('opacity') === '1';
             }).length;
 
             var newValue = snapshot.val();
