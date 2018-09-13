@@ -31,7 +31,6 @@ Installation:
 - Method 1 (Raspberry PI): fswebcam (instead of OpenCV)
 	- This method is to be used if you don't have as powered USB hub (webcam + opencv + v4l can be flaky)
 	- sudo apt-get install fswebcam
-	- Crontab: `@reboot cd /home/pi/apps/nalu-net/client && python main.py &`
 	- When running the client add "fswebcam" to the args, e.g. `python main.py fswebcam`
 - Method 2 (OSX): OpenCV installation
 	- brew install opencv
@@ -41,8 +40,16 @@ Installation:
 	- Or try pip install opencv
 	- Crontab: `@reboot cd /home/pi/nalu-net/client && python main.py &`
 
-Running:
+Running locally:
 - python main.py (or python3)
+
+Crontab:
+```
+Start after booting up: @reboot cd /home/pi/apps/nalu-net/client && python main.py fswebcam &
+Auto-pull changes: */5 * * * * cd /home/pi/apps/nalu-net && git pull origin master
+
+To reboot every night use sudo crontab -e: 0 1 * * * /sbin/shutdown -r
+```
 
 
 ### Training the model

@@ -44,8 +44,13 @@ if not fswebcam:
     cam = cv2.VideoCapture(cam_index)
 
 def update_count(count):
+    ts = int(time.time())
     nalus_ref = root.child(db_root)
-    nalus_ref.update({'count' : count})
+    nalus_ref.update({'count': count, 'timestamp': ts})
+    root.child('history').push({
+        'count': count, 
+        'timestamp': ts
+    })
 
 def get_count():
 	return root.child('nalus').get()
