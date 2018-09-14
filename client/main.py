@@ -139,32 +139,40 @@ def run_fswebcam(sc):
         print('Snapping...')
         call(["fswebcam -r 1920x1080 --no-banner " + filename], shell=True)
 
-        # Send to service
-        print('- Detect')
-        url = nalunet_url
-        files = {'file': open(filename, 'rb')}
-        r = requests.post(url, files=files)
-        
-        if 'cam' in sys.argv:
-            print (r.text)
-        
-        bad_response = re.sub(r',? ?"img" ?: ?".*"', '', r.text, flags=re.S)
-        response = json.loads(bad_response)
-            
-        # Store count
-        if ('error' in response):
-            print('- Error: ' + response['error'])
-        else:
-            print('- Count: ' + str(response['count']))
-            update_count(response['count'])
-            print('- Updated!')
+        if os.path.isfile(filename):
 
-        # Remove image
-        os.remove(filename)
+            # Scale
+            try:
+                call(["convert " + filename + " -resize 3840×2160! " + filename], shell=True)
+                call(["convert " + filename + " -gravity Center -crop 50%\! " + filename], shell=True)
+            except Exception as inst:
+                print ('- Re-scaling failed, skipping this step.', inst)
+
+            # Send to service
+            print('- Detect')
+            url = nalunet_url
+            files = {'file': open(filename, 'rb')}
+            r = requests.post(url, files=files)
+            
+            if 'cam' in sys.argv:
+                print (r.text)
+            
+            bad_response = re.sub(r',? ?"img" ?: ?".*"', '', r.text, flags=re.S)
+            response = json.loads(bad_response)
+                
+            # Store count
+            if ('error' in response):
+                print('- Error: ' + response['error'])
+            else:
+                print('- Count: ' + str(response['count']))
+                update_count(response['count'])
+                print('- Updated!')
+
+            # Remove image
+            os.remove(filename)
 
         # Schedule next execution
         print("Sleeping for a few seconds...\n")
-        failures = 0
         s.enter(10, 1, run_fswebcam, (sc,))
 
     except Exception as inst:
