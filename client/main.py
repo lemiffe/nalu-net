@@ -83,6 +83,14 @@ def run_opencv(sc):
         if ret:
             # Take a snap
             cv2.imwrite(filename, frame)
+            
+            # Scale
+            try:
+                print ("- Scaling...")
+                call(["convert " + filename + " -resize 3840x2160! " + filename], shell=True)
+                call(["convert " + filename + " -gravity Center -crop 50%\! " + filename], shell=True)
+            except Exception as inst:
+                print ('- Re-scaling failed, skipping this step.', inst)
 
             # Send to service
             print('- Detect')
@@ -143,7 +151,8 @@ def run_fswebcam(sc):
 
             # Scale
             try:
-                call(["convert " + filename + " -resize 3840×2160! " + filename], shell=True)
+                print ("- Scaling...")
+                call(["convert " + filename + " -resize 3840x2160! " + filename], shell=True)
                 call(["convert " + filename + " -gravity Center -crop 50%\! " + filename], shell=True)
             except Exception as inst:
                 print ('- Re-scaling failed, skipping this step.', inst)
