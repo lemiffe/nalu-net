@@ -137,7 +137,7 @@ def run_fswebcam(sc):
 
     try:
         print('Snapping...')
-        call(["fswebcam -r 1280x720 --no-banner " + filename], shell=True)
+        call(["fswebcam -r 1920x1080 --no-banner " + filename], shell=True)
 
         # Send to service
         print('- Detect')
