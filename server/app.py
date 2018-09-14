@@ -41,7 +41,7 @@ def index():
             return(jsonify({"count": 0, "error": "file does not exist"}))
         
         # Run Yolo
-        output = subprocess.getoutput("cd darknet && ./darknet detect cfg/naluv1_tiny_net.cfg naluv1_tiny.weights data/" + filename + " -thresh 0.4")
+        output = subprocess.getoutput("cd darknet && ./darknet detect cfg/naluv1_tiny_net.cfg naluv1_tiny.weights data/" + filename + " -thresh 0.2")
         count = output.count('nalu: ')
 
         if render_image:
